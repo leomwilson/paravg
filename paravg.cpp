@@ -18,18 +18,19 @@ double totalsum = 0;
 
 int prodi = 0; // next empty chunk
 int consi = 0; // next full chunk
-condition_variable fullcv;
+condition_variable_any fullcv;
 int fullc = 0;
-condition_variable emptycv;
+condition_variable_any emptycv;
 int emptyc = 0;
 
 float** chunks;
 ifstream infile;
 
 void worker(stop_token stop) {
-    while (true) {
+    while (!stop.stop_requested()) {
         unique_lock<mutex> lock(m);
-        fullcv.wait(lock, []{ return fullc > 0;});
+        fullcv.wait(lock, stop, []{ return fullc > 0;});
+        if (stop.stop_requested()) { break; }
         float* data = chunks[consi];
         consi = (consi + 1) % chunkc;
         fullc--;
@@ -53,9 +54,10 @@ void worker(stop_token stop) {
 }
 
 void reader(stop_token stop) {
-    while(true) {
+    while(!stop.stop_requested()) {
         unique_lock<mutex> lock(m);
-        emptycv.wait(lock, []{ return emptyc > 0;});
+        emptycv.wait(lock, stop, []{ return emptyc > 0;});
+        if (stop.stop_requested()) { break; }
         float* chunk = chunks[prodi];
         prodi = (prodi + 1) % chunkc;
         emptyc--;
@@ -84,8 +86,8 @@ int main(int argc, char** argv) {
     auto startTime = chrono::steady_clock::now();
 
     if (argc != 4) {
-        cout << "Usage: ./simpleavg [threads] [chunk-size] numbers.txt" << endl;
-        cout << "Note that chunk-size should be an approximate divisor of the count of numbers." << endl;
+        std::cout << "Usage: ./simpleavg [threads] [chunk-size] numbers.txt" << endl;
+        std::cout << "Note that chunk-size should be an approximate divisor of the count of numbers." << endl;
         return 1;
     }
 
@@ -109,8 +111,8 @@ int main(int argc, char** argv) {
 
     auto endTime = chrono::steady_clock::now();
     auto duration = chrono::duration<double>(endTime - startTime).count();
-    cout << "Computed average: " << (totalsum / totalchunks) << endl;
-    cout << "Processed " << (totalchunks * chunksize) << " numbers in " << duration << " seconds." << endl;
+    std::cout << "Computed average: " << (totalsum / totalchunks) << endl;
+    std::cout << "Processed " << (totalchunks * chunksize) << " numbers in " << duration << " seconds." << endl;
 
     return 0;
 }
