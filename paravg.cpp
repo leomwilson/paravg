@@ -5,6 +5,7 @@
 #include <mutex>
 #include <thread>
 #include <stop_token>
+#include <unistd.h>
 
 using namespace std;
 
@@ -107,7 +108,7 @@ int main(int argc, char** argv) {
         chunks[i] = new float[chunksize];
     }
 
-    jthread readerThread(reader);
+    //jthread readerThread(reader);
 
     jthread* workerThreads = new jthread[threadc];
 
@@ -115,7 +116,12 @@ int main(int argc, char** argv) {
         workerThreads[i] = jthread(worker);
     }
 
-    readerThread.join();
+    reader(stop_token());
+
+    //readerThread.join();
+
+    // make sure the workers have time to pick up the last chunks
+    usleep(100); // 0.1ms
 
     for (int i = 0; i < threadc; i++) {
         workerThreads[i].request_stop();
