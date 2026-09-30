@@ -98,8 +98,8 @@ int main(int argc, char** argv) {
 
     infile.open(argv[3]);
 
-    int totalchunks = 0;
-    double totalsum = 0;
+    totalchunks = 0;
+    totalsum = 0;
     
     chunks = new float*[chunkc];
 
@@ -108,6 +108,18 @@ int main(int argc, char** argv) {
     }
 
     jthread readerThread(reader);
+
+    jthread* workerThreads = new jthread[threadc];
+
+    for (int i = 0; i < threadc; i++) {
+        workerThreads[i] = jthread(worker);
+    }
+
+    readerThread.join();
+
+    for (int i = 0; i < threadc; i++) {
+        workerThreads[i].request_stop();
+    }
 
     auto endTime = chrono::steady_clock::now();
     auto duration = chrono::duration<double>(endTime - startTime).count();
