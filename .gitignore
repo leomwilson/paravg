@@ -71,4 +71,7 @@ Testing/
 # binaries
 generator/number-generator
 generator/ordered-generator
+simpleavg
+paravg
+
 tests
