@@ -15,3 +15,6 @@ offered slightly better performance, up to a certain point.
 I believe these results are primarily due to the fact that reading
 couldn't be efficiently parallelized, forming a bottleneck compared
 to the relatively lightweight tasks of addition and division.
+
+Update: on extremely large files (e.g. 7.2GB), the parallelized version
+offers a measurable performance boost.
